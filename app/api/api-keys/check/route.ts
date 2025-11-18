@@ -5,7 +5,7 @@ type Provider = 'openai' | 'gemini' | 'cursor' | 'anthropic' | 'aigateway'
 
 // Map agents to their required providers
 const AGENT_PROVIDER_MAP: Record<string, Provider | null> = {
-  claude: 'aigateway',
+  claude: 'anthropic',
   codex: 'aigateway', // Codex uses Vercel AI Gateway
   copilot: null, // Copilot uses user's GitHub token from their account
   cursor: 'cursor',
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     // Override provider based on model for multi-provider agents
     if (model && (agent === 'cursor' || agent === 'opencode')) {
       if (isAnthropicModel(model)) {
-        provider = 'aigateway'
+        provider = 'anthropic'
       } else if (isGeminiModel(model)) {
         provider = 'gemini'
       } else if (isOpenAIModel(model)) {
