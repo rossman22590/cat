@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
     // Override provider based on model for multi-provider agents
     if (model && (agent === 'cursor' || agent === 'opencode')) {
       if (isAnthropicModel(model)) {
-        provider = 'anthropic'
+        provider = 'aigateway'
       } else if (isGeminiModel(model)) {
         provider = 'gemini'
       } else if (isOpenAIModel(model)) {
