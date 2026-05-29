@@ -1144,7 +1144,7 @@ export function TaskChat({ taskId, task }: TaskChatProps) {
           )
         })}
 
-        {/* Show "Awaiting response..." or "Awaiting response..." if task is processing and latest message is from user without response */}
+        {/* Show sandbox setup progress or "Awaiting response..." if task is processing and latest message is from user without response */}
         {(task.status === 'processing' || task.status === 'pending') &&
           displayMessages.length > 0 &&
           (() => {
@@ -1154,13 +1154,59 @@ export function TaskChat({ taskId, task }: TaskChatProps) {
               // Check if this is the first user message (sandbox initialization)
               const userMessages = displayMessages.filter((m) => m.role === 'user')
               const isFirstMessage = userMessages.length === 1
-              const placeholderText = isFirstMessage ? 'Awaiting response...' : 'Awaiting response...'
 
+              // Get the latest logs to show progress (filter out server logs)
+              const setupLogs = (task.logs || []).filter((log) => !log.message.startsWith('[SERVER]')).slice(-8) // Show last 8 logs
+
+              // If first message and we have logs, show sandbox setup progress
+              if (isFirstMessage && setupLogs.length > 0) {
+                return (
+                  <div className="mt-4">
+                    <div className="text-xs px-2">
+                      <div className="space-y-1">
+                        <div className="text-muted-foreground font-medium mb-2 flex items-center gap-2">
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          Setting up sandbox...
+                        </div>
+                        <div className="space-y-0.5 pl-5">
+                          {setupLogs.map((log, idx) => {
+                            const isLatest = idx === setupLogs.length - 1
+                            return (
+                              <div
+                                key={idx}
+                                className={`truncate ${
+                                  isLatest
+                                    ? 'text-foreground'
+                                    : log.type === 'error'
+                                      ? 'text-red-500/60'
+                                      : log.type === 'success'
+                                        ? 'text-green-500/60'
+                                        : 'text-muted-foreground/60'
+                                }`}
+                              >
+                                {log.message}
+                              </div>
+                            )
+                          })}
+                        </div>
+                        <div className="text-right font-mono text-muted-foreground/50 mt-2">
+                          {formatDuration(lastMessage.createdAt)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              }
+
+              // Otherwise show simple awaiting response
               return (
                 <div className="mt-4">
                   <div className="text-xs text-muted-foreground px-2">
                     <div className="opacity-50">
-                      <div className="italic">{placeholderText}</div>
+                      <div className="italic flex items-center gap-2">
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                        Awaiting response...
+                      </div>
                       <div className="text-right font-mono opacity-70 mt-1">
                         {formatDuration(lastMessage.createdAt)}
                       </div>
@@ -1180,7 +1226,7 @@ export function TaskChat({ taskId, task }: TaskChatProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Header Tabs */}
-      <div className="py-2 flex items-center justify-between gap-1 flex-shrink-0 h-[46px] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <div className="py-2 px-3 flex items-center justify-between gap-1 flex-shrink-0 h-[46px] overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] border-b">
         <div className="flex items-center gap-1">
           <button
             onClick={() => setActiveTab('chat')}
@@ -1221,36 +1267,38 @@ export function TaskChat({ taskId, task }: TaskChatProps) {
       </div>
 
       {/* Tab Content */}
-      {renderTabContent()}
+      <div className="flex-1 min-h-0 px-3 pt-3 flex flex-col overflow-hidden">{renderTabContent()}</div>
 
       {/* Input Area (only for chat tab) */}
       {activeTab === 'chat' && (
-        <div className="flex-shrink-0 relative">
-          <Textarea
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Send a follow-up message..."
-            className="w-full min-h-[60px] max-h-[120px] resize-none pr-12 text-base md:text-xs"
-            disabled={isSending}
-          />
-          {task.status === 'processing' || task.status === 'pending' ? (
-            <button
-              onClick={handleStopTask}
-              disabled={isStopping}
-              className="absolute bottom-2 right-2 rounded-full h-5 w-5 bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <Square className="h-3 w-3" fill="currentColor" />
-            </button>
-          ) : (
-            <button
-              onClick={handleSendMessage}
-              disabled={!newMessage.trim() || isSending}
-              className="absolute bottom-2 right-2 rounded-full h-5 w-5 bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowUp className="h-3 w-3" />}
-            </button>
-          )}
+        <div className="flex-shrink-0 px-3 pb-3">
+          <div className="relative">
+            <Textarea
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Send a follow-up message..."
+              className="w-full min-h-[60px] max-h-[120px] resize-none pr-12 text-base md:text-xs"
+              disabled={isSending}
+            />
+            {task.status === 'processing' || task.status === 'pending' ? (
+              <button
+                onClick={handleStopTask}
+                disabled={isStopping}
+                className="absolute bottom-2 right-2 rounded-full h-5 w-5 bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Square className="h-3 w-3" fill="currentColor" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSendMessage}
+                disabled={!newMessage.trim() || isSending}
+                className="absolute bottom-2 right-2 rounded-full h-5 w-5 bg-primary text-primary-foreground hover:bg-primary/90 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSending ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowUp className="h-3 w-3" />}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

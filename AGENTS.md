@@ -72,6 +72,16 @@ pnpm lint
 
 This ensures all code follows the project's formatting standards, type safety requirements, and linting rules, preventing issues in pull requests.
 
+### Use shadcn CLI for UI Components
+
+**When adding UI components, check if a shadcn/ui component exists and install it via CLI instead of writing it manually.**
+
+```bash
+pnpm dlx shadcn@latest add <component-name>
+```
+
+Existing components are in `components/ui/`. See [shadcn/ui docs](https://ui.shadcn.com/) for available components.
+
 ### CRITICAL: Never Run Dev Servers
 
 **DO NOT run development servers (e.g., `npm run dev`, `pnpm dev`, `next dev`) as they will conflict with other running instances.**
@@ -262,3 +272,26 @@ If you need to log information for debugging purposes:
 
 **Remember: When in doubt, use a static string. No exceptions.**
 
+
+<!-- opensrc:start -->
+
+## Source Code Reference
+
+Source code for dependencies is available in `opensrc/` for deeper understanding of implementation details.
+
+See `opensrc/sources.json` for the list of available packages and their versions.
+
+Use this source code when you need to understand how a package works internally, not just its types/interface.
+
+### Fetching Additional Source Code
+
+To fetch source code for a package or repository you need to understand, run:
+
+```bash
+npx opensrc <package>           # npm package (e.g., npx opensrc zod)
+npx opensrc pypi:<package>      # Python package (e.g., npx opensrc pypi:requests)
+npx opensrc crates:<package>    # Rust crate (e.g., npx opensrc crates:serde)
+npx opensrc <owner>/<repo>      # GitHub repo (e.g., npx opensrc vercel/ai)
+```
+
+<!-- opensrc:end -->
